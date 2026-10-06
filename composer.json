@@ -21,8 +21,10 @@
     "phpunit/phpunit": "^10.5|^11.0"
   },
   "config": {
-    "audit": {
-      "block-insecure": false
+    "policy": {
+      "advisories": {
+        "block": false
+      }
     },
     "allow-plugins": {
       "php-http/discovery": true
