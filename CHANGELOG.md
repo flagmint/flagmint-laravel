@@ -10,6 +10,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.1] — 2026-10-06
+
+### Added
+
+- **Wrapper identity** (`flagmint-laravel` + package version) passed into the core
+  client so handshake / config / events attribute traffic to this wrapper.
+- Queue flush path uses `drainPendingEvents()` so coalesced `kind: evaluation`
+  reports are included with custom / error events.
+
 ## [0.1.0] — 2026-10-06
 
 ### Added
@@ -31,4 +40,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   event jobs.
 - BSD-3-Clause license.
 
+[0.1.1]: https://github.com/flagmint/flagmint-laravel/releases/tag/v0.1.1
 [0.1.0]: https://github.com/flagmint/flagmint-laravel/releases/tag/v0.1.0

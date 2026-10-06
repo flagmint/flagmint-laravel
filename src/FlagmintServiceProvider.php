@@ -61,6 +61,10 @@ final class FlagmintServiceProvider extends ServiceProvider
                 'enableFlagmint' => (bool) ($config['enable'] ?? true) && $apiKey !== 'missing-flagmint-key',
                 'env' => (string) ($config['env'] ?? 'production'),
                 'cacheAdapter' => $app->make(CacheAdapter::class),
+                'wrapperInfo' => [
+                    'name' => Package::NAME,
+                    'version' => Package::VERSION,
+                ],
                 'onError' => static function (array $error) use ($app): void {
                     if ($app->bound(LoggerInterface::class)) {
                         $app->make(LoggerInterface::class)->warning('Flagmint error', $error);

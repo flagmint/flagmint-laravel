@@ -185,7 +185,7 @@ final class FlagmintManager
             return;
         }
 
-        $events = $this->client->getEventBuffer()->drain();
+        $events = $this->client->drainPendingEvents();
         if ($events === []) {
             return;
         }
