@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flagmint\Laravel\Jobs;
 
-use Flagmint\Client;
+use Flagmint\FlagmintClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,6 +16,9 @@ use Illuminate\Queue\SerializesModels;
  *
  * Events are serialized onto the job at dispatch time so a separate queue
  * worker (which does not share the web process EventBuffer) still sends them.
+ * The worker POSTs the payloads as-is via {@see FlagmintClient::flushEventBatch()} —
+ * timestamps, kind, and properties are preserved (no re-track).
+ *
  * Dispatched automatically by {@see \Flagmint\Laravel\FlagmintManager} when
  * `flagmint.queue_events` is true.
  */
@@ -28,29 +31,25 @@ final class FlushFlagmintEvents implements ShouldQueue
 
     /**
      * @param list<array<string, mixed>> $events Buffered event payloads
-     *     (`flagKey`, `kind`, `properties`, …)
+     *     (`flagKey`, `kind`, `properties`, `timestamp`, …)
      */
     public function __construct(public readonly array $events)
     {
     }
 
     /**
-     * Re-buffer events on the worker's Client and flush to the API.
+     * POST the drained events without re-recording through track()/trackError().
      *
-     * @param Client $client Container-bound Flagmint client
+     * On failure throws so the queue can retry. Retries re-POST the same job
+     * payloads (at-least-once); they do not re-buffer via track().
+     *
+     * @param FlagmintClient $client Container-bound FlagmintClient
+     * @throws \RuntimeException When the evaluator rejects the batch
      */
-    public function handle(Client $client): void
+    public function handle(FlagmintClient $client): void
     {
-        foreach ($this->events as $event) {
-            $kind = (string) ($event['kind'] ?? 'custom');
-            $flagKey = (string) ($event['flagKey'] ?? '');
-            $properties = is_array($event['properties'] ?? null) ? $event['properties'] : [];
-            if ($kind === 'error') {
-                $client->trackError($flagKey, $properties);
-            } else {
-                $client->track($flagKey, $properties);
-            }
+        if (!$client->flushEventBatch($this->events)) {
+            throw new \RuntimeException('Flagmint event flush failed.');
         }
-        $client->flushEvents();
     }
 }

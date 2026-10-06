@@ -48,7 +48,7 @@ final class LaravelCacheAdapter implements CacheAdapter
     /**
      * {@inheritdoc}
      *
-     * TTL is lease expiry + 5 minutes for eviction; Client still fail-closes on lease.
+     * TTL is lease expiry + 5 minutes for eviction; FlagmintClient still fail-closes on lease.
      */
     public function saveRulesSnapshot(string $apiKey, RulesSnapshot $snapshot): void
     {

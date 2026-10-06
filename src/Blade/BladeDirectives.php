@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Blade;
 final class BladeDirectives
 {
     /**
-     * Register directives with lazy manager resolution (avoids boot-time Client init).
+     * Register directives with lazy manager resolution (avoids boot-time FlagmintClient init).
      */
     public static function register(): void
     {

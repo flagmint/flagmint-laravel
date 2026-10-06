@@ -42,7 +42,7 @@ return [
     'queue_events' => (bool) env('FLAGMINT_QUEUE_EVENTS', true),
 
     /*
-    | Octane / long-lived workers: bind Client as singleton; never mutate shared
+    | Octane / long-lived workers: bind FlagmintClient as singleton; never mutate shared
     | evaluation context — pass per-request context via middleware / method args.
     */
 ];

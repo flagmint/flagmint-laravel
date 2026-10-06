@@ -8,7 +8,7 @@ use Flagmint\Cache\ArrayMemoryAdapter;
 use Flagmint\Cache\CacheAdapter;
 use Flagmint\Cache\PredisRedisClient;
 use Flagmint\Cache\RedisAdapter;
-use Flagmint\Client;
+use Flagmint\FlagmintClient;
 use Flagmint\Laravel\Blade\BladeDirectives;
 use Flagmint\Laravel\Cache\LaravelCacheAdapter;
 use Flagmint\Laravel\Console\RefreshCommand;
@@ -24,13 +24,13 @@ use Psr\Log\LoggerInterface;
  * Registers Flagmint into a Laravel application.
  *
  * - Merges / publishes `config/flagmint.php`
- * - Binds singleton {@see Client}, {@see FlagmintManager}, {@see CacheAdapter}
+ * - Binds singleton {@see FlagmintClient}, {@see FlagmintManager}, {@see CacheAdapter}
  * - Registers Blade `@feature`, middleware alias `flagmint.context`, Artisan `flagmint:refresh`
  *
  * Install: `composer require flagmint/laravel` then
  * `php artisan vendor:publish --tag=flagmint-config`.
  *
- * **Octane note:** Client is a singleton (shared rules). Never mutate a shared
+ * **Octane note:** FlagmintClient is a singleton (shared rules). Never mutate a shared
  * evaluation context — use {@see SetFlagmintContext} per request or pass `$context`
  * explicitly on each call.
  */
@@ -49,7 +49,7 @@ final class FlagmintServiceProvider extends ServiceProvider
             return $this->resolveCacheAdapter($app);
         });
 
-        $this->app->singleton(Client::class, function (Application $app): Client {
+        $this->app->singleton(FlagmintClient::class, function (Application $app): FlagmintClient {
             $config = $app['config']->get('flagmint', []);
             $apiKey = (string) ($config['api_key'] ?? '');
             if ($apiKey === '') {
@@ -74,14 +74,14 @@ final class FlagmintServiceProvider extends ServiceProvider
                 $options['handshakeEndpoint'] = $config['handshake_endpoint'];
             }
 
-            return new Client($options);
+            return new FlagmintClient($options);
         });
 
         $this->app->singleton(FlagmintManager::class, function (Application $app): FlagmintManager {
             $config = $app['config']->get('flagmint', []);
 
             return new FlagmintManager(
-                $app->make(Client::class),
+                $app->make(FlagmintClient::class),
                 $app->make(RequestContext::class),
                 (bool) ($config['queue_events'] ?? true),
             );
@@ -122,7 +122,7 @@ final class FlagmintServiceProvider extends ServiceProvider
             'redis' => $this->redisAdapter($cache, $prefix),
             'custom' => $this->customAdapter($cache),
             default => new LaravelCacheAdapter(
-                Cache::store($cache['store'] ?? null),
+                Cache::store(($cache['store'] ?? null) ?: null),
                 $prefix,
             ),
         };

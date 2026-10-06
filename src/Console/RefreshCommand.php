@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Flagmint\Laravel\Console;
 
-use Flagmint\Client;
+use Flagmint\FlagmintClient;
 use Illuminate\Console\Command;
 
 /**
@@ -24,10 +24,10 @@ final class RefreshCommand extends Command
     protected $description = 'Refresh Flagmint config-sync rules (REST)';
 
     /**
-     * @param Client $client
+     * @param FlagmintClient $client
      * @return int Command::SUCCESS or FAILURE
      */
-    public function handle(Client $client): int
+    public function handle(FlagmintClient $client): int
     {
         $client->refresh();
         if ($client->getRulesStore()->isReady()) {

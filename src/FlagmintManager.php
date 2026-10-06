@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace Flagmint\Laravel;
 
-use Flagmint\Client;
+use Flagmint\FlagmintClient;
 use Flagmint\Laravel\Context\RequestContext;
 use Flagmint\Laravel\Jobs\FlushFlagmintEvents;
 
 /**
- * Laravel-facing API over {@see Client} with per-request context defaults.
+ * Laravel-facing API over {@see FlagmintClient} with per-request context defaults.
  *
  * Prefer the {@see \Flagmint\Laravel\Facades\Flagmint} facade in app code:
  *
@@ -25,18 +25,18 @@ use Flagmint\Laravel\Jobs\FlushFlagmintEvents;
  * ```
  *
  * When `$context` is omitted, the manager falls back to {@see RequestContext}
- * set by middleware — never a process-global mutable Client context.
+ * set by middleware — never a process-global mutable FlagmintClient context.
  */
 final class FlagmintManager
 {
     /**
-     * @param Client $client Shared singleton client (rules store + cache)
+     * @param FlagmintClient $client Shared singleton FlagmintClient (rules store + cache)
      * @param RequestContext $requestContext Per-request context holder
      * @param bool $queueEvents When true, {@see track()} / {@see trackError()}
      *     dispatch {@see FlushFlagmintEvents}; when false, flush synchronously
      */
     public function __construct(
-        private readonly Client $client,
+        private readonly FlagmintClient $client,
         private readonly RequestContext $requestContext,
         private readonly bool $queueEvents = true,
     ) {
@@ -45,13 +45,13 @@ final class FlagmintManager
     /**
      * Underlying core client (advanced: custom refresh, rules inspection).
      */
-    public function client(): Client
+    public function client(): FlagmintClient
     {
         return $this->client;
     }
 
     /**
-     * Bootstrap handshake + rules refresh. See {@see Client::ready()}.
+     * Bootstrap handshake + rules refresh. See {@see FlagmintClient::ready()}.
      */
     public function ready(): bool
     {
@@ -59,7 +59,7 @@ final class FlagmintManager
     }
 
     /**
-     * Pull latest config-sync rules. See {@see Client::refresh()}.
+     * Pull latest config-sync rules. See {@see FlagmintClient::refresh()}.
      */
     public function refresh(): void
     {
@@ -79,7 +79,7 @@ final class FlagmintManager
     }
 
     /**
-     * Evaluate any flag type. See {@see Client::getFlag()}.
+     * Evaluate any flag type. See {@see FlagmintClient::getFlag()}.
      *
      * @param string $flagKey
      * @param mixed $fallback
@@ -163,7 +163,7 @@ final class FlagmintManager
     }
 
     /**
-     * Immediately POST any events still sitting on the Client buffer.
+     * Immediately POST any events still sitting on the FlagmintClient buffer.
      */
     public function flushEvents(): bool
     {
@@ -171,31 +171,25 @@ final class FlagmintManager
     }
 
     /**
-     * Drain the Client buffer and either flush now or dispatch {@see FlushFlagmintEvents}.
+     * Flush immediately (sync) or drain the buffer onto a queue job.
      *
-     * Events are copied onto the job so a separate queue worker still sends them.
+     * Sync mode calls {@see FlagmintClient::flushEvents()} directly so timestamps and
+     * kinds are unchanged. Queue mode drains once and dispatches the raw events
+     * so the worker can POST them without re-recording.
      */
     private function scheduleFlush(): void
     {
-        $events = $this->client->getEventBuffer()->drain();
-        if ($events === []) {
-            return;
-        }
         if (!$this->queueEvents) {
-            foreach ($events as $event) {
-                $kind = (string) ($event['kind'] ?? 'custom');
-                $flagKey = (string) ($event['flagKey'] ?? '');
-                $properties = is_array($event['properties'] ?? null) ? $event['properties'] : [];
-                if ($kind === 'error') {
-                    $this->client->trackError($flagKey, $properties);
-                } else {
-                    $this->client->track($flagKey, $properties);
-                }
-            }
             $this->client->flushEvents();
 
             return;
         }
+
+        $events = $this->client->getEventBuffer()->drain();
+        if ($events === []) {
+            return;
+        }
+
         FlushFlagmintEvents::dispatch($events);
     }
 }

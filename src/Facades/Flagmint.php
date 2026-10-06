@@ -35,7 +35,7 @@ use Illuminate\Support\Facades\Facade;
  * @method static void track(string $flagKey, array $properties = [])
  * @method static void trackError(string $flagKey, array $properties = [])
  * @method static bool flushEvents()
- * @method static \Flagmint\Client client()
+ * @method static \Flagmint\FlagmintClient client()
  *
  * @see FlagmintManager
  */

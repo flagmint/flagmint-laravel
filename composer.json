@@ -2,7 +2,6 @@
   "name": "flagmint/laravel",
   "description": "Flagmint Laravel SDK — service provider, facade, Blade, middleware",
   "type": "library",
-  "version": "0.1.0",
   "license": "BSD-3-Clause",
   "authors": [
     {
@@ -17,6 +16,7 @@
     "illuminate/contracts": "^11.44|^12.0"
   },
   "require-dev": {
+    "guzzlehttp/guzzle": "^7.8",
     "orchestra/testbench": "^9.12|^10.0",
     "phpunit/phpunit": "^10.5|^11.0"
   },
@@ -35,8 +35,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Flagmint\\Laravel\\Tests\\": "tests/",
-      "Flagmint\\Tests\\": "../php-sdk/tests/"
+      "Flagmint\\Laravel\\Tests\\": "tests/"
     }
   },
   "extra": {
@@ -49,19 +48,6 @@
       }
     }
   },
-  "repositories": [
-    {
-      "type": "path",
-      "url": "../flagmint-php-sdk",
-      "options": {
-        "symlink": true
-      }
-    },
-    {
-      "type": "vcs",
-      "url": "https://github.com/flagmint/flagmint-php-sdk.git"
-    }
-  ],
   "scripts": {
     "test": "phpunit"
   },
